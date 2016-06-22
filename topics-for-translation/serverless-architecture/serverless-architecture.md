@@ -15,9 +15,9 @@ serverless-architectures
 목차
 
 * [서버리스란 무엇인가?](#what-is-serverless)
-  * 몇가지 예제
-    * UI 주도 애플리케이션
-    * 메시지 주도 애플리케이션
+  * [몇가지 예제](#a-couple-of-examples)
+    * [UI 주도 애플리케이션](#ui-driven-applications)
+    * [메시지 주도 애플리케이션](#message-driven-applications)
   * `Function as a Service` 뒤집어보기
     * 상태
     * 실행 기간
@@ -43,3 +43,34 @@ serverless-architectures
 1. `서버리스`는 서버단 로직이나 상태 등을 관리하기 위한 써드파티 애플리케이션 혹은 클라우드 서비스에 현저히 또는 온전히 의존하는 애플리케이션들을 설명하기 위해 쓰였습니다. 주로 `리치 클라이언트` 애플리케이션(예를 들자면 단일 페이지 웹 애플리케이션이나 모바일 앱 같은 것들)을 가리키는데, 클라우드에서 접근 가능한 `Parse`나 `Firebase` 같은 데이터베이스라든가, `Auth0`, `AWS Cognito` 같은 인증 서비스들 같은 거대한 생태계를 사용하는 것들입니다. 예전에는 이러한 서비스들을 [(Mobile) Backend as a Service](https://en.wikipedia.org/wiki/Mobile_backend_as_a_service)라고 불렀으니, 여기에서는 이들을 그냥 `BaaS`라고 부르도록 하죠.
 2. 또한 `서버리스`는 개발자들이 서버단 로직을 개발자들이 짜긴 하지만, 전통적인 아키텍처와는 달리 상태를 저장하지 않는 Stateless 컴퓨팅 컨테이너에 넣고 돌리는 애플리케이션을 의미하기도 합니다. 이러한 애플리케이션은 보통 이벤트 기반으로 작동하고, 한 번 쓰고 버리고, 써드파티에 의해 관리되죠(ThoughWorks는 최근 [자사 포스트](https://www.thoughtworks.com/radar/techniques/serverless-architecture)에서 이렇게 정의했습니다). 이런 방식으로 생각해 볼 수 있는 한가지 방법은 `[Functions as a Service](https://twitter.com/marak/status/736357543598002176) (or FaaS)`입니다. [AWS 람다](https://aws.amazon.com/lambda/)는 현재 이 FaaS계의 가장 인기있는 구현체지요. 하지만 다른 것들도 더 있습니다. 여기서는 바로 이 `FaaS`를 `서버리스`의 의미로 사용하도록 하겠습니다.
 
+저는 주로 두 번째 얘기를 할텐데요, 조금 더 새롭기도 하고 우리가 흔히 기술적인 아키텍처에 대해 생각하는 것과 현격한 차이가 있기도 합니다. 게다가 요즘 `서버리스`라는 것에 대한 수많은 얘기들이 오고가기 때문이기도 하구요.
+
+하지만, 이러한 개념들이 사실은 모두 관련이 있고 하나로 모여들고 있습니다. [`Auth0`](https://auth0.com/)가 하나의 좋은 예가 될 수 있겠네요. 처음에 BaaS 형태인 `Authentication as a Service`로 시작했다가 지금은 [Auth0 Webtask](https://webtask.io/)를 통해 FaaS 영역으로 들어왔습니다.
+
+게다가 `BaaS 형태의` 애플리케이션을 개발하는 많은 경우, 특히 모바일 앱과 반대로 `리치` 웹 앱을 개발하는 경우, 어느 정도 서버단의 커스텀 기능들이 여전히 필요합니다. 특히 당신이 사용하고 있는 BaaS 서비스와 어느 정도 통합을 한다면 FaaS 가 이런 경우 좋은 솔루션이 될 수 있습니다. 이러한 기능들의 좋은 예로는 데이터 유효성 검사(악성 클라이언트로부터 보호하기 위한)라든가 많은 계산 용량을 필요로 하는 작업들(이미지나 비디오 프로세싱 같은 것들)이 있겠지요.
+
+
+<a name="a-couple-of-examples"></a>
+### 몇 가지 예제 ###
+
+<a name="ui-driven-applications"></a>
+#### UI 주도 애플리케이션 ####
+
+서버단에 로직이 있는 전통적인 쓰리티어 클라이언트 시스템을 봅시다. 좋은 예로는 전자상거래 시스템들이 있겠네요. 온라인 애완동물 용품 사이트 같은거?
+
+전통적으로 이런 아키텍처는 이런 식으로 생겼습니다. 서버단에 자바로 구현했고, 클라이언트단에는 HTML과 자바스크립트로 구현하죠.
+
+![](http://martinfowler.com/articles/serverless/ps.svg)
+
+이런 아키텍처에서 클라이언트는 상대적으로 그닥 똑똑하지 않습니다. 대부분의 로직들 &ndash; 인증, 페이지 네비게이션, 검색, 트랜잭션 등은 서버단에서 구현을 해놨으니까요.
+
+`서버리스` 아키텍처에서는 이렇게 보일 겁니다:
+
+![](http://martinfowler.com/articles/serverless/sps.svg)
+
+엄청나게 간단하게 그린 모델인데요, 그럼에도 불구하고 여전히 수많은 변화들이 일어난 것을 볼 수 있습니다. 여기서 잠깐! 이건 단순히 `서버리스` 개념을 보여주기 위한 도구로서 만든 그림이지 이게 이런 식으로 아키텍처를 이전해야 한다고 추천하는 건 아니라는 것을 기억해 두세요!
+
+
+
+<a name="message-driven-applications"></a>
+#### 메시지 주도 애플리케이션 ####
