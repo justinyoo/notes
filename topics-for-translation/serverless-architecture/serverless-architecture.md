@@ -1,35 +1,53 @@
-# 서버리스 아키텍처 #
+# (번역) 서버리스 아키텍처 #
 serverless-architectures
 
+> 이 글은 [마틴 파울러의 웹사이트](http://martinfowler.com/)에 올라온 [Serverless Architectures](http://martinfowler.com/articles/serverless.html)을 번역한 글입니다. 원문이 계속 업데이트 되기 때문에 번역본과 원문을 함께 보시면 더욱 도움이 될 겁니다.
+
 ---
-2016년 6월 17일
-
-![](http://martinfowler.com/articles/serverless/mike.jpg)
-
-[마이크 로버츠 Mike Roberts](https://twitter.com/mikebroberts)
-마이크는 뉴욕에 사는 엔지니어링 리더이다. 요즘엔 팀 매니지먼트가 주요 업무이긴 하지만 여전히 클로주어 Clojure 쪽에서 코딩도 하고 소프트웨어 아키텍처 쪽에서도 활발한 의견 개진을 하고 있다. 그는 지금 사람들이 서버리스 아키텍처에 대해 주목하는 현상에 대해 꽤 긍정적이다.
-
-아래 태그들을 통해 **비슷한 문서들**을 찾을 수 있다:
-[application architecture](http://martinfowler.com/tags/application%20architecture.html)
-
-목차
-
-* [서버리스란 무엇인가?](#what-is-serverless)
-  * [몇가지 예제](#a-couple-of-examples)
-    * [UI 주도 애플리케이션](#ui-driven-applications)
-    * [메시지 주도 애플리케이션](#message-driven-applications)
-  * [`Function as a Service` 뒤집어보기](#unpacking-function-as-a-service)
-    * [상태](#state)
-    * [실행 기간](#execution-duration)
-    * [초기 실행 지연](#startup-latency)
-    * API 게이트웨어
-    * 도구들
-    * 오픈소스
-  * 서버리스가 아닌 것은?
-    * PaaS와 비교
-    * #NoOps
-    * Stored Procedures as a Service
-
+<div class="row">
+<div class="col-xs-12 col-sm-12 col-md-6 col-lg-6">
+<p>2016년 6월 17일</p>
+<p><img src="http://martinfowler.com/articles/serverless/mike.jpg" width="120"/></p>
+<p><a href="https://twitter.com/mikebroberts">마이크 로버츠 Mike Roberts</a></p>
+<p>마이크는 뉴욕에 사는 엔지니어링 리더이다. 요즘엔 팀 매니지먼트가 주요 업무이긴 하지만 여전히 클로주어 Clojure 쪽에서 코딩도 하고 소프트웨어 아키텍처 쪽에서도 활발한 의견 개진을 하고 있다. 그는 지금 사람들이 서버리스 아키텍처에 대해 주목하는 현상에 대해 꽤 긍정적이다.</p>
+<p>&nbsp;</p>
+<p>아래 태그들을 통해 <strong>비슷한 문서들</strong>을 찾을 수 있다:<br/>
+<a href="http://martinfowler.com/tags/application%20architecture.html">application architecture</a>
+</p>
+</div>
+<div class="col-xs-12 col-sm-12 col-md-6 col-lg-6">
+<p>목차</p>
+<ul>
+<li><a href="#what-is-serverless">서버리스란 무엇인가?</a>
+  <ul>
+    <li><a href="#a-couple-of-examples">몇가지 예제</a>
+      <ul>
+        <li><a href="#ui-driven-applications">UI 주도 애플리케이션</a></li>
+        <li><a href="#message-driven-applications">메시지 주도 애플리케이션</a></li>
+      </ul>
+    </li>
+    <li><a href="#unpacking-function-as-a-service">`Function as a Service` 뒤집어보기</a>
+      <ul>
+        <li><a href="#state">상태</a></li>
+        <li><a href="#execution-duration">실행 기간</a></li>
+        <li><a href="#startup-latency">초기 실행 지연</a></li>
+        <li><a href="#api-gateway">API 게이트웨어</a></li>
+        <li><a href="#tooling">도구들</a></li>
+        <li><a href="#open-source">오픈소스</a></li>
+      </ul>
+    </li>
+    <li><a href="#what-isnt-serverless">서버리스가 아닌 것은?</a>
+      <ul>
+        <li><a href="#comparison-with-paas">PaaS와 비교</a></li>
+        <li><a href="#noops">#NoOps</a></li>
+        <li><a href="#stored-procedure-as-a-service">Stored Procedures as a Service</a></li>
+      </ul>
+    </li>
+  </ul>
+</li>
+</ul>
+</div>
+</div>
 ---
 
 `서버리스`는 요즘 소프트웨어 아키텍처 세상에서는 아주 핫한 토픽입니다. [책들도](https://leanpub.com/serverless) [나왔고](https://www.amazon.com/gp/product/1680501496?ie=UTF8&tag=martinfowlerc-20&linkCode=as2&camp=1789&creative=9325&creativeASIN=1680501496), [오픈소스 프레임워크도 있고](https://github.com/serverless/serverless), [수많은](https://aws.amazon.com/lambda/) [벤더들이](https://cloud.google.com/functions/docs/) [프레임워크를](https://azure.microsoft.com/en-us/services/functions/) [내놨죠](http://www.ibm.com/cloud-computing/bluemix/openwhisk/). 게다가 아예 `서버리스`만을 주제로 하는 [컨퍼런스](http://serverlessconf.io/)까지 생겼습니다. 그런데, 도대체 `서버리스`가 뭘까요? 그리고 어째서 이 `서버리스`를 고려해야 (혹은 고려하지 말아야) 할까요? 이 [계속 업데이트 되는 문서](http://martinfowler.com/bliki/EvolvingPublication.html)를 통해 저는 당신이 이러한 질문들에 대한 답을 구할 수 있는 빛을 찾기를 바랍니다.
@@ -167,4 +185,123 @@ FaaS 펑션은 개별 실행에 있어 보통 제한시간이 있습니다. 현�
 #### API 게이트웨이 ####
 
 ![](http://martinfowler.com/articles/serverless/ag.svg)
+
+FaaS가 갖는 특징들 중 하나는 앞서 살짝 언급한 `API 게이트웨이`입니다. API 게이트웨이는 HTTP 서버로서 설정을 통해 라우팅 정보와 엔드포인트를 정의하고 각각의 라우트는 FaaS 펑션에 연결 시킵니다. API 게이트웨이가 리퀘스트를 받았을 때, 리퀘스트와 일치하는 라우팅 정보를 찾아서 그에 맞는 FaaS 펑션을 실행시킵니다. 보통 API 게이트웨이는 HTTP 리퀘스트 파라미터로부터 FaaS 펑션에 필요한 입력 인자를 매핑합니다. 그렇게 함으로써 API 게이트웨이는 FaaS 펑션의 결과값을 HTTP 응답객체에 실어서 최초 요청자에게 반환합니다.
+
+AWS는 API 게이트웨이 서비스를 갖고 있구요, 다른 제공자 역시도 비슷한 기능을 보유하고 있습니다.
+
+API 게이트웨이는 단순히 리퀘스트를 라우팅하는 기능 이외에도 인증 절차를 수행하고, 입력값에 대한 유효성 검사를 수행하며 응답 객체와 매핑을 시키는 등의 역할을 하기도 합니다. 당신의 거미줄 같은 감각은 어쩌면 이게 실제로 좋은 생각인지 아닌지 궁금해 할 수도 있습니다. 잠시 후에 다시 얘기해 보도록 하죠.
+
+API 게이트웨이와 FaaS 조합의 한가지 유즈 케이스는 HTTP를 앞세운 마이크로서비스 형태가 될 겁니다. `서버리스`는 여기서 스케일링과 관리 그리고 FaaS 펑션이 가져다 주는 여러가지 잇점을 담당하죠.
+
+현 시점에서 API 게이트웨이 도구는 아직 처절할 정도로 성숙하지 않았습니다. 그렇긴 해도 API 게이트웨이와 함께 애플리케이션을 개발하는 것이 그다지 어렵거나 한 것은 아닙니다.
+
+
+<a name="tooling"></a>
+#### 도구들 ####
+
+API 게이트웨이 도구들이 아직 성숙하지 않았다는 것은 이미 언급했구요, 이것은 전반적으로 `서버리스` FaaS 시장에 있어서 공통적인 현상입니다. 하지만 예외는 있죠. 그 예가 바로 Auth0의 [Webtask](https://webtask.io/)인데요 개발자 UX에서 엄청난 강점을 갖고 있습니다. [Tomasz Janczuk](https://twitter.com/tjanczuk)은 최근에 있었던 서버리스 컨퍼런스에서 굉장히 좋은 데모를 보여준 적이 있습니다.
+
+디버깅과 모니터링 역시 이 `서버리스` 애플리케이션에서는 해결해야 할 숙제들입니다. 이 포스트의 뒷부분에서 다뤄보도록 하죠.
+
+
+<a name="open-source"></a>
+#### 오픈 소스 ####
+
+`서버리스` FaaS 애플리케이션의 주요 잇점들 중 하나는 바로 투명한 실행 환경 공급에 있습니다. 아직 오픈 소스들은 현재 여기에 그다지 관련이 있지는 않습니다. 도커와 같은 컨테이너들 말이죠. 조만간 우리는 유명한 FaaS / API 게이트웨이 플랫폼이 `회사내 on-premise`에서 돌아간다거나 개발자의 컴퓨터에서 돌아간다거나 하는 것들을 볼 수 있을 겁니다. IBM의 [OpenWhisk](https://developer.ibm.com/open/openwhisk/)는 좋은 예가 될 수 있는데요, 이것이 어떤 대안이 될지 아닐지 지켜보는 것도 꽤 흥미로울 겁니다.
+
+실행 환경 구성과는 별개로 FaaS 펑션을 정의하고, 설치하고 실행시키는데 도와주는 도구들과 프레임워크들은 이미 오픈 소스로 많이 나와 있습니다. 예를 들어 [`서버리스 프레임워크`](https://github.com/serverless/serverless)는 실제로 동작하는 API 게이트웨이와 람다를 AWS에서 제공하는 형태보다 훨씬 더 쉽게 사용할 수 있게 해줍니다. 자바스크립트를 좀 지나치게 쓰긴 했는데, 만약 자바스크립트와 API 게이트웨이 조합으로 애플리케이션을 개발한다면 꼭 한 번 봐 둘만 합니다.
+
+또다른 예로는 [Apex](https://github.com/apex/apex)가 있습니다. 이 프로젝트는 `AWS 람다 펑션들을 손쉽게 만들고, 설치하고, 관리하자`라는 슬로건을 갖고 있습니다. Apex가 갖는 재미있는 요소들 중 하나는 아마존에서 직접 지원하지 않는 언어들을 람다 펑션 차원에서 지원하게끔 해준다는 겁니다. 예를 들자면 `Go` 언어 같은 것들이죠.
+
+
+<a name="what-isnt-serverless"></a>
+### 서버리스가 아닌 것은? ###
+
+직금까지 이 글에서 저는 `서버리스`가 `Backend as a Service (BaaS)`와 `Functions as a Service (FaaS)`의 합집합이라고 정의했습니다. 또한 주로 FaaS 쪽을 중점으로 해서 이야기를 풀어나갔지요.
+
+이제 가장 중요한, 무엇이 이득이고 무엇이 손해인지에 대해 얘기하기 전에 이 `서버리스`의 정의에 대해 조금만 더 살펴보고자 합니다. 적어도 무엇이 `서버리스`가 **아닌지**에 대해 얘기해 보죠. (최근의 저를 포함해서) 몇몇 사람들이 이러한 것들에 대해 혼동했던 것을 봐 왔고, 좀 더 명확하게 하는 것도 좋은 생각 같습니다.
+
+
+<a name="comparison-with-paas"></a>
+#### PaaS와 비교 ####
+
+앞서 잠깐 `서버리스` FaaS 펑션은 `12요소` 애플리케이션과 비슷하다고 했는데요, 그렇다면 [`Heroku`](http://www.heroku.com/)와 같은 또다른 PaaS라고 할 수도 있을까요? 간단하게 대답하기 위해 Adrian Cockcroft의 트윗을 인용하겠습니다.
+
+<div>
+<blockquote class="twitter-tweet" data-lang="en"><p lang="en" dir="ltr">If your PaaS can efficiently start instances in 20ms that run for half a second, then call it serverless. <a href="https://t.co/S3YzvqFYLR">https://t.co/S3YzvqFYLR</a></p>&mdash; adrian cockcroft (@adrianco) <a href="https://twitter.com/adrianco/status/736553530689998848">May 28, 2016</a></blockquote>
+<script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+</div>
+
+> 만약 당신의 PaaS가 20ms 이내에 인스턴스를 실행시켜서 0.5초 동안 원하는 기능을 실행시킬 수 있다면 그땐 그걸 `서버리스`라고 부르세요.
+
+다른 말로, 대부분의 PaaS 애플리케이션들은 매 리퀘스트마다 애플리케이션 전체를 올렸다 내렸다할 수 있게끔 설계되지 않았습니다. 반면에 FaaS 플랫폼은 정확하게 그렇게 하죠.
+
+좋습니다. 만약 제가 훌륭한 [12요소 애플리케이션](http://12factor.net/processes)의 개발자라면 딱히 코딩을 하는데 있어서 별 차이점은 없을 거예요. 사실입니다. 하지만 가장 큰 차이는 어떻게 당신의 애플리케이션을 *운영하는가*에 있습니다. 우린 모두 데브옵스 관점에 충실한 엔지니어들이고 개발에 대해 생각하는 것 만큼 운영에 대해서도 생각하고 있습니다, 그렇죠?
+
+운영 측면에서 FaaS와 PaaS의 핵심적인 차이는 바로 *스케일링*입니다. 대부분의 PaaS에서 당신은 여전히 스케일링을 고민해야 하죠. 헤로쿠의 예를 들자면 다이노스 Dynos 몇개를 돌리고 싶은가를 고민해봐야 합니다. FaaS 애플리케이션에서 이부분은 완전히 투명합니다. 심지어 당신이 PaaS 애플리케이션을 스케일링 완전 자동화로 설정한다 하더라도 개별 리퀘스트 수준에서 이런 스케일링을 하진 앟아요(물론 당신이 굉장히 특별하게 트래픽 프로필을 설정해 놓았다면 얘긴 달라집니다). 따라서 FaaS 애플리케이션은 이렇게 비용이 연계가 될 때 굉장히 효율적입니다.
+
+이런 잇점들이 있다면 왜 계속 PaaS를 쓰려고 하죠? PaaS를 쓸 이유들이 여러가지 있겠지만 아마도 도구들 그리고 API 게이트웨이의 성숙도가 가장 큰 이유들이 될 겁니다. 더군다나 PaaS에 구현한 12요소 애플리케이션들은 최적화를 위해 앱 내 읽기전용 캐시를 사용하겠죠. 이것은 FaaS 펑션에서는 사용할 수 없는 기능입니다.
+
+
+<a name="noops"></a>
+#### #NoOps ####
+
+`서버리스`는 `NoOps`를 의미하는 것은 아닙니다. `서버리스` 토끼구멍을 얼마나 깊이 파고 들어가는가에 따라 *아마도* `내부 시스템 관리자가 없다`는 것을 의미할 거예요. 여기서 우리는 두가지 중요한 것을 고려해야 합니다.
+
+먼저 `Ops`는 서버 관리 이상의 그 무언가를 의미합니다. 적어도 모니터링, 설치, 보안, 네트워킹 등을 의미하기도 하죠. 그리고 종종 시스템 스케일링과 어느 정도의 운영 시스템 디버깅까지를 포함하기도 합니다. 이런 문제들은 `서버리스` 애플리케이션으로 간다고 해도 여전히 존재하고 이를 해결할 전략이 필요하죠. 어떤 면에서는 `Ops`는 `서버리스` 환경에서 좀 더 어려운 일이 될 수도 있습니다. 왜냐하면 모든 것들이 전부 새롭기 때문이죠.
+
+다음으로 시스템 관리자가 여전히 필요하다면 `서버리스`를 위해서는 아웃소싱을 하면 그만입니다. 딱히 나쁘진 않아요 실제로 우린 여러번 아웃소싱을 해 왔으니까요. 하지만 구체적으로 당신이 무엇을 하려고 하는가에 따라 이건 좋을 수도 있고 나쁠 수도 있습니다. 어느 시점에서 당신은 시스템 관리자가 당신의 애플리케이션을 지원할 필요가 있다는 것을 알아야 할 지 모릅니다.
+
+[Charity Majors](https://twitter.com/mipsytipsy)는 이와 관련해서 최근 있었던 서버리스 컨퍼런스에서 좋은 발표를 해 줬습니다. 저는 온라인에 이 발표가 올라오면 꼭 확인해 보기를 권장합니다. 그 전까지는 [이 글](https://charity.wtf/2016/05/31/wtf-is-operations-serverless/)과 [이 글](https://charity.wtf/2016/05/31/operational-best-practices-serverless/)을 읽어보면 좋겠네요.
+
+
+<a name="stored-procedures-as-a-service"></a>
+#### Stored Procedures as a Service ####
+
+또다른 흥미로운 주제는 `서버리스` FaaS가 `Stored Procedures as a Service`라는 겁니다. (이 글에서 사용한 것들을 포함해서) FaaS 펑션의 많은 예제들이 주로 데이터베이스에 접근하기 위한 코드들이기 때문이 아닐까 생각합니다. 만약에 *겨우 이정도*가 우리가 FaaS를 사용하는 이유라고 한다면 이 네이밍은 적당할 지도 모르겠군요. 하지만 이건 FaaS의 서브셋에 불과할 뿐더러 만약 이런 용도로만 사용한다면 뭐랄까 조금은 맞지 않습니다.
+
+이것은 어찌 보면 Stored Procedure가 갖는 동일한 문제를 FaaS 역시도 가질 수 있다는 것을 고려해 볼 *필요가 있습니다*. Camille이 트윗에서 언급한 것과 같은 기술적 부채들도 포함해서 말이지요.
+
+<div>
+<blockquote class="twitter-tweet" data-lang="en"><p lang="en" dir="ltr">I wonder if serverless services will become a thing like stored procedures, a good idea that quickly turns into massive technical debt</p>&mdash; Camille Fournier (@skamille) <a href="https://twitter.com/skamille/status/719583067275403265">April 11, 2016</a></blockquote>
+<script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+</div>
+
+> 만약에 `서버리스` 서비스가 마치 Stored Procedure 처럼 변한다면 이건 곧바로 엄청난 기술적 부채가 될 거라는 걸 생각해 보자구.
+
+Stored Procedure를 사용하는 것에서 오는 수많은 교훈들이 있습니다. 그것들은 FaaS에서 반드시 되돌아보고 적용이 가능할지 아닐지를 결정해야 할 것들이지요. Stored Procedure들은:
+
+1. 종종 벤더 종속적인 언어를 요구하거나, 적어도 벤더 종속적인 프레임워크 혹은 언어로 확장할 필요가 있습니다.
+2. 데이터베이스 콘텍스트 안에서 실행시켜야 하기 때문에 테스트가 어렵습니다.
+3. 일급 애플리케이션으로서 다루기 까다롭고 버전 관리도 힘듭니다.
+
+이러한 제약사항들이 모두 Stored Procedure를 구현하는데 있어서 적용되는 것은 아닐 겁니다. 하지만 지금까지 제 경험상 수많은 문제들을 읽으켰던 것은 사실이예요. 그렇다면 이것을 FaaS에 어떻게 적용을 시킬 수 있는지 살펴봅시다.
+
+1번 항목은 FaaS 구현에 있어서 큰 걸림돌은 아닙니다. 그냥 그런 부분들을 걷어내면 그만이죠.
+
+2번 항목에서 우리는 `코드만` 쓰기 때문에, 단위 테스트는 다른 코드들과 마찬가지로 쉽습니다. 통합 테스트는 다른 (그리고 정당한) 문제예요. 이건 나중에 얘기해 봅시다.
+
+3번 항목에서 다시금 FaaS 펑션은 `코드일 뿐`이기 때문에 버전 관리도 괜찮습니다. 하지만 애플리케이션 패키징 측면에서 봤을 때 아직 어떤 성숙한 패턴이 나오지는 않았어요. 앞서 언급했던 `서버리스` 프레임워크는 자체적으로 이런 패키징 형태를 제공합니다. AWS는 2016년 5월에 열렸던 서버리스 컨퍼런스에서 패키징 관련해서 `Flourish`라는 이름으로 작업중이라고 발표했습니다. 하지만 이건 뭐 나와 봐야 아는 거겠죠.
+
+> 이 문서는 `지속적으로 진화`합니다. 저는 수시로 이 문서를 업데이트할 예정입니다. 그렇게 해서 좀 더 많은 서버리스 아키텍처와 관련한 장단점들을 포함한 주제들을 이 문서에 담길 희망합니다. 아마도 향후 일이년 이내에 좀 더 서버리스 관련 주제들이 발전하지 않을까 싶네요.
+>
+> 이 주제와 관련해서 우리가 어떻게 업데이트 하는지를 알고 싶다면 우리 사이트의 [RSS 피드](http://martinfowler.com/feed.atom), 제 [트위터 피드](https://twitter.com/mikebroberts) 또는 [마틴 파울러의 트위터](http://www.twitter.com/martinfowler) 피드를 주목해 주세요.
+
+---
+
+## 알림 ##
+
+이 글을 쓰는데 도움을 주신 분들께 감사 드립니다: Obie Fernandez, Martin Fowler, Paul Hammant, Badri Janakiraman, Kief Morris, Nat Pryce, Ben Rady.
+
+이 새 기술에 적당히 반론도 해 주시고 격려도 해주신 Internet Media의 제 전 팀원들께 감사 드립니다: John Chapin, Pete Gieser, Sebastián Rojas and Philippe René.
+
+마지막으로 이 주제와 관련해 여러 생각들을 피력해 주신 모든 분들, 특히 제가 언급한 분들께 감사 드립니다.
+
+
+## 리비전 ##
+
+2016년 6월 17일: *서버리스가 아닌 것은?* 섹션 추가
+2016년 6월 16일: *`Functions as a Service` 뒤집어 보기* 섹션 추가
+2016년 6월 15일: 첫번째 버전 발행 - 몇가지 예제들
 
