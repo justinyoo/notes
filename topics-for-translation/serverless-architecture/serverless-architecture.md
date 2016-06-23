@@ -59,7 +59,7 @@ serverless-architectures
 소프트웨어 업계에서 늘상 그렇듯이, `서버리스`에 대한 명확한 관점은 없습니다. 그리고 아래 두 가지의 다르지만 겹치는 부분이 있는 이러한 견해들 역시도요:
 
 1. `서버리스`는 서버단 로직이나 상태 등을 관리하기 위한 써드파티 애플리케이션 혹은 클라우드 서비스에 현저히 또는 온전히 의존하는 애플리케이션들을 설명하기 위해 쓰였습니다. 주로 `리치 클라이언트` 애플리케이션(예를 들자면 단일 페이지 웹 애플리케이션이나 모바일 앱 같은 것들)을 가리키는데, 클라우드에서 접근 가능한 `Parse`나 `Firebase` 같은 데이터베이스라든가, `Auth0`, `AWS Cognito` 같은 인증 서비스들 같은 거대한 생태계를 사용하는 것들입니다. 예전에는 이러한 서비스들을 [(Mobile) Backend as a Service](https://en.wikipedia.org/wiki/Mobile_backend_as_a_service)라고 불렀으니, 여기에서는 이들을 그냥 `BaaS`라고 부르도록 하죠.
-2. 또한 `서버리스`는 개발자들이 서버단 로직을 개발자들이 짜긴 하지만, 전통적인 아키텍처와는 달리 상태를 저장하지 않는 Stateless 컴퓨팅 컨테이너에 넣고 돌리는 애플리케이션을 의미하기도 합니다. 이러한 애플리케이션은 보통 이벤트 기반으로 작동하고, 한 번 쓰고 버리고, 써드파티에 의해 관리되죠(ThoughWorks는 최근 [자사 포스트](https://www.thoughtworks.com/radar/techniques/serverless-architecture)에서 이렇게 정의했습니다). 이런 방식으로 생각해 볼 수 있는 한가지 방법은 `[Functions as a Service](https://twitter.com/marak/status/736357543598002176) (or FaaS)`입니다. [AWS 람다](https://aws.amazon.com/lambda/)는 현재 이 FaaS계의 가장 인기있는 구현체지요. 하지만 다른 것들도 더 있습니다. 여기서는 바로 이 `FaaS`를 `서버리스`의 의미로 사용하도록 하겠습니다.
+2. 또한 `서버리스`는 개발자들이 서버단 로직을 개발자들이 짜긴 하지만, 전통적인 아키텍처와는 달리 상태를 저장하지 않는 Stateless 컴퓨팅 컨테이너에 넣고 돌리는 애플리케이션을 의미하기도 합니다. 이러한 애플리케이션은 보통 이벤트 기반으로 작동하고, 한 번 쓰고 버리고, 써드파티에 의해 관리되죠(ThoughWorks는 최근 [자사 포스트](https://www.thoughtworks.com/radar/techniques/serverless-architecture)에서 이렇게 정의했습니다). 이런 방식으로 생각해 볼 수 있는 한가지 방법은 [`Functions as a Service(또는 FaaS)`](https://twitter.com/marak/status/736357543598002176)입니다. [AWS 람다](https://aws.amazon.com/lambda/)는 현재 이 FaaS계의 가장 인기있는 구현체지요. 하지만 다른 것들도 더 있습니다. 여기서는 바로 이 `FaaS`를 `서버리스`의 의미로 사용하도록 하겠습니다.
 
 저는 주로 두 번째 얘기를 할텐데요, 조금 더 새롭기도 하고 우리가 흔히 기술적인 아키텍처에 대해 생각하는 것과 현격한 차이가 있기도 합니다. 게다가 요즘 `서버리스`라는 것에 대한 수많은 얘기들이 오고가기 때문이기도 하구요.
 
